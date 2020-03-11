@@ -1,0 +1,12 @@
+cmake_minimum_required(VERSION 3.2)
+
+project(exchange_data)
+
+add_definitions(-DFDEBUG)
+
+add_subdirectory(commons)
+add_subdirectory(protocols/autots)
+
+add_executable(${PROJECT_NAME} main.cpp)
+
+target_link_libraries(${PROJECT_NAME} PRIVATE commons autots)
