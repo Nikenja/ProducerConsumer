@@ -3,7 +3,6 @@
 
 #include <deque>
 #include <pthread.h>
-#include "iexchange_data.h"
 
 namespace SafeContainersNs
 {

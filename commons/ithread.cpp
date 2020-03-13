@@ -2,11 +2,12 @@
 #include <string.h>
 #include <signal.h>
 #include "log_msg.h"
+#include "pthread_join_timeout.h"
 
 namespace ThreadNs
 {
 
-IThread::IThread() : m_alreadyCreated(false)
+IThread::IThread() : m_alreadyStarted(false)
 {
     log_msg(__PRETTY_FUNCTION__, __LINE__);
 }
@@ -16,73 +17,100 @@ IThread::~IThread()
     log_msg(__PRETTY_FUNCTION__, __LINE__);
 }
 
-void IThread::StartThread()
+// TODO подумать на переносом StartRoutine в IThread()
+void IThread::StartRoutine(const RoutineNs::IRoutinePtr& routine)
 {
-    if (m_alreadyCreated)
+    log_msg(__PRETTY_FUNCTION__, __LINE__);
+    if (m_alreadyStarted)
     {
         return;
     }
 
-    const int result = pthread_create(&m_thread, NULL, &IThread::StartRoutine, this);
+    if (routine == NULL)
+    {
+        return;
+    }
 
+    m_routine = routine;
+
+    const int result = pthread_create(&m_routineId, NULL, &IThread::StartRoutine, m_routine.get());
     if (result != 0)
     {
         log_msg(__PRETTY_FUNCTION__, __LINE__);        
     }
 
-    m_alreadyCreated = true;
+    m_alreadyStarted = true;
 }
 
-void IThread::StopThread()
+void IThread::StopRoutine()
 {
-    log_msg(__PRETTY_FUNCTION__, __LINE__);
-    if (m_alreadyCreated != true)
+    if (m_alreadyStarted != true)
     {
         return;
     }
 
-    pthread_kill(m_thread, SIGCHLD);
-
-    pthread_join(m_thread, NULL);
-
-    // const int cancelResult = pthread_cancel(m_thread);
-    // if (cancelResult != 0)
-    // {
-    //     log_msg(__PRETTY_FUNCTION__, __LINE__);
-    // }
-    // log_msg(__PRETTY_FUNCTION__, __LINE__);
-
-    // timespec waitingTime;
-    // if (clock_gettime(CLOCK_REALTIME, &waitingTime) == -1)
-    // {
-    //     log_msg(__PRETTY_FUNCTION__, __LINE__);
-    // }
-    // waitingTime.tv_sec += 1;
-    // // waitingTime.tv_nsec += 1000000;
-    
-    // const int timedjoinResult = pthread_timedjoin_np(m_thread, NULL, &waitingTime);
-    // if (timedjoinResult != 0)
-    // {
-    //     log_msg(__PRETTY_FUNCTION__, __LINE__);
-    //     log_msg("error: ", strerror(timedjoinResult));
-    // }
+    // 1 solution
+    if (TryStopRoutineThroughFlag())
+    {
+        log_msg(__PRETTY_FUNCTION__, __LINE__);
+        return;
+    }
+    // 2 solution
+    if (TryStopRoutineThroughCancel())
+    {
+        log_msg(__PRETTY_FUNCTION__, __LINE__);
+        return;
+    }
+    // 3 solution
+    TryStopRoutineThroughKill();
+    log_msg(__PRETTY_FUNCTION__, __LINE__);
 }
 
-// void* IThread::StartRoutine(void* self)
-// {
-//     IThread* thread = reinterpret_cast<IThread*>(self);
+void* IThread::StartRoutine(void* parameter)
+{
+    log_msg(__PRETTY_FUNCTION__, __LINE__);
+    RoutineNs::IRoutine* routine = static_cast<RoutineNs::IRoutine*>(parameter);
 
-//     // const int result = pthread_setcanceltype(PTHREAD_CANCEL_DEFERRED, NULL);
-    
-//     // if (result != 0)
-//     // {
-//         // log_msg(__PRETTY_FUNCTION__, __LINE__);
-//     // }
+    routine->Run();
 
-//     thread->doRoutine();
-//     thread->doOnEndRoutine();
+    return NULL;
+}
 
-//     return NULL;
-// }
+bool IThread::TryStopRoutineThroughFlag()
+{
+    m_routine->Stop();
+    const int resultJoinTimeout = pthread_join_timeout(m_routineId, 10000);
+    log_msg("resultJoinTimeout", resultJoinTimeout);
+
+    return (resultJoinTimeout == 0);
+}
+
+bool IThread::TryStopRoutineThroughCancel()
+{
+    const int cancelResult = pthread_cancel(m_routineId);
+    if (cancelResult != 0)
+    {
+        log_msg(__PRETTY_FUNCTION__, __LINE__);
+        return false;
+    }
+    const int resultJoinTimeout = pthread_join_timeout(m_routineId, 10000);
+    log_msg("resultJoinTimeout", resultJoinTimeout);
+
+    return (resultJoinTimeout == 0);
+}
+
+bool IThread::TryStopRoutineThroughKill()
+{
+    const int killResult = pthread_kill(m_routineId, SIGTERM);
+    if (killResult != 0)
+    {
+        log_msg(__PRETTY_FUNCTION__, __LINE__);
+        return false;
+    }
+    const int resultJoinTimeout = pthread_join(m_routineId, NULL);
+    log_msg("resultJoinTimeout", resultJoinTimeout);
+
+    return (resultJoinTimeout == 0);
+}
 
 }

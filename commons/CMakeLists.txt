@@ -6,6 +6,11 @@ set(SOURCE_FILES
     cond_var.cpp
     iexchange_data.cpp
     ithread.cpp
+    safe_state.cpp
+    iroutine.cpp
+    consumer_routine.cpp
+    waiting_time_getter.cpp
+    pthread_join_timeout.cpp
 )
 
 add_library(${PROJECT_NAME} SHARED ${SOURCE_FILES})

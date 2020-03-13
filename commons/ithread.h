@@ -2,6 +2,7 @@
 #define ITHREAD_H
 
 #include <pthread.h>
+#include "iroutine.h"
 
 namespace ThreadNs
 {
@@ -12,21 +13,28 @@ public:
     IThread();
     virtual ~IThread();
 
-    void StartThread();
-    void StopThread();
+    void StartRoutine(const RoutineNs::IRoutinePtr& routine);
+    /**
+     * Stop routine through 3 solutions.
+     * 1 solution. Maint thread set routine run state to false and try pthread_join with timeout.
+     * If 1 solution did not work when:
+     * 2 solution. Maint thread call pthread_cancel and try pthread_join with timeout
+     * If 2 solution did not work when:
+     * 3 solution. Maint thread call pthread_kill with SIGTERM. Routine call pthread_exit and
+     * main thread try pthread_join as mach as possible.
+     */
+    void StopRoutine();
 private:
-    pthread_t m_thread;
-    bool m_alreadyCreated;
+    pthread_t m_routineId;
+    bool m_alreadyStarted;
+    RoutineNs::IRoutinePtr m_routine;
 
-    template <typename T>
     static void* StartRoutine(void* parameter);
-};
 
-template <typename T>
-void* IThread<T>::StartRoutine(void* parameter)
-{
-    IRoutineThread
-}
+    bool TryStopRoutineThroughFlag();
+    bool TryStopRoutineThroughCancel();
+    bool TryStopRoutineThroughKill();
+};
 
 }
 
