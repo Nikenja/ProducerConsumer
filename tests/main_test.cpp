@@ -2,7 +2,9 @@
 #define BOOST_TEST_MODULE MainTestModule
 #include <iostream>
 #include <unistd.h>
+#include <cstdlib>
 #include <boost/test/unit_test.hpp>
+#include <boost/shared_ptr.hpp>
 #include <boost/make_shared.hpp>
 #include "iroutine.h"
 #include "autots_routine.h"
@@ -12,22 +14,38 @@
 #include "producer.h"
 #include "iexchange_data.h"
 
-BOOST_AUTO_TEST_SUITE()
+typedef boost::shared_ptr< RoutineNs::Producer<ExchangeDataNs::IExchangeDataPtr> > ProducerPtr;
 
-BOOST_AUTO_TEST_CASE(FisrtCase)
+class ProducerConsumerFixture
 {
-    CondVarNs::CondVar condVar;
-    SafeContainersNs::SafeQueue<ExchangeDataNs::IExchangeDataPtr> eventsQueue;
+public:
+    ProducerPtr m_producer;
+    RoutineNs::IRoutinePtr m_autoTsConsumer;
 
-    RoutineNs::Producer<ExchangeDataNs::IExchangeDataPtr> producer(condVar, eventsQueue);
+    ProducerConsumerFixture()
+    {
+        m_producer = boost::make_shared< RoutineNs::Producer<ExchangeDataNs::IExchangeDataPtr> >(
+            m_condVar, m_eventsQueue
+        );
+        m_autoTsConsumer = boost::make_shared<RoutineNs::AutoTsRoutine>(m_condVar, m_eventsQueue);
+    }
+    ~ProducerConsumerFixture()
+    {
+    }
+private:
+    CondVarNs::CondVar m_condVar;
+    SafeContainersNs::SafeQueue<ExchangeDataNs::IExchangeDataPtr> m_eventsQueue;
+};
 
-    RoutineNs::IRoutinePtr autoTsRoutine =
-        boost::make_shared<RoutineNs::AutoTsRoutine>(condVar, eventsQueue);
-
+BOOST_FIXTURE_TEST_CASE(StartStopRoutine, ProducerConsumerFixture)
+{
     ThreadNs::IThread thread;
-    thread.StartRoutine(autoTsRoutine);
+    thread.StartRoutine(m_autoTsConsumer);
 
     sleep(2);
+
+    std::system("sleep 60");
+    std::system("ps -T -C main_test > StartStopRoutineResult.txt");
 
     // ExchangeDataNs::IExchangeDataPtr event =
     //     boost::make_shared<ExchangeDataNs::IExchangeData>();
@@ -40,7 +58,6 @@ BOOST_AUTO_TEST_CASE(FisrtCase)
     thread.StopRoutine();
 
     sleep(2);
+
+    std::system("ps -T -C main_test >> StartStopRoutineResult.txt");    
 }
-
-BOOST_AUTO_TEST_SUITE_END()
-

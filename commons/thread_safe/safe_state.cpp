@@ -1,6 +1,6 @@
 #include "safe_state.h"
 
-namespace RoutineNs
+namespace ThreadSafeNs
 {
 
 SafeState::SafeState() :

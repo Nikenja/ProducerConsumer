@@ -1,18 +1,15 @@
 cmake_minimum_required(VERSION 3.2)
 
-project(exchange_data)
+project(main)
 
 add_definitions(-DFDEBUG)
 
+enable_testing()
+
 add_subdirectory(commons)
-add_subdirectory(protocols/autots)
-add_subdirectory(tests)
 
 add_executable(${PROJECT_NAME} main.cpp)
 
-set_target_properties(${PROJECT_NAME} PROPERTIES
-    COMPILE_OPTIONS "-Wpedantic;-Wall;-Wextra"
-)
+target_compile_options(${PROJECT_NAME} PRIVATE -Wall -Wextra -Wpedantic -Werror)
 
-target_link_libraries(${PROJECT_NAME} PRIVATE commons autots)
-
+target_link_libraries(${PROJECT_NAME} PRIVATE exchange_data)

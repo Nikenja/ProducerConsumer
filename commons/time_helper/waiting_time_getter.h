@@ -3,16 +3,16 @@
 
 #include <time.h>
 
-namespace WaitingTimeGetterNs
+namespace TimeHelperNs
 {
 
-extern unsigned int MAX_NSECS_DELAY;
+extern const unsigned int MAX_NSECS_DELAY;
 
 void add_time(const unsigned int secDelay, const unsigned int nsecDelay, timespec& waitingTime);
 
 bool try_get_monotonic_waiting_time(
     const unsigned int secDelay, const unsigned int nsecDelay, timespec& waitingTime);
 
-}
+} // namespace TimeHelperNs
 
 #endif // WAITING_TIME_GETTER_H

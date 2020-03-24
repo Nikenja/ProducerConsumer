@@ -14,18 +14,15 @@ class ConsumerRoutine : public IRoutine
 public:
     ConsumerRoutine(
         CondVarNs::CondVar& condVar,
-        SafeContainersNs::SafeQueue<ExchangeDataNs::IExchangeDataPtr>& eventsQueue);
+        ThreadSafeNs::SafeQueue<ExchangeDataNs::IExchangeDataPtr>& eventsQueue);
 
     virtual ~ConsumerRoutine();
 private:
     CondVarNs::CondVar& m_condVar;
-    SafeContainersNs::SafeQueue<ExchangeDataNs::IExchangeDataPtr>& m_eventsQueue;
+    ThreadSafeNs::SafeQueue<ExchangeDataNs::IExchangeDataPtr>& m_eventsQueue;
 
     void doRun();
     virtual void doConsumeEvent(const ExchangeDataNs::IExchangeDataPtr& event) = 0;
-
-    bool TrySettingSigmask(sigset_t& sigSet) const;
-    bool CatchSignal(sigset_t& sigSet, timespec& signalWaitingTime) const;
 };
 
 }

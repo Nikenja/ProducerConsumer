@@ -1,7 +1,9 @@
-#include "pthread_join_timeout.h"
+#include "thread_join_timeout.h"
 #include <stdint.h>
 #include <time.h>
 #include <errno.h>
+#include "thread_defs.h"
+#include "thread_joining_data.h"
 #include "log_msg.h"
 
 namespace ThreadNs
@@ -26,21 +28,21 @@ bool is_timeout(const uint64_t startTimeInMsec, unsigned int timeoutInMsec)
 
 void* pthread_join_routine(void* arg)
 {
-    JoinPthreadData* data = reinterpret_cast<JoinPthreadData*>(arg);
+    ThreadJoiningData* data = reinterpret_cast<ThreadJoiningData*>(arg);
     pthread_join(data->GetJoinPthreadId(), NULL);
     data->SetJoinState(true);
     
     return NULL;
 }
 
-int pthread_join_timeout(pthread_t joinPthreadId, unsigned int timeoutInMsec)
+int thread_join_timeout(pthread_t joinPthreadId, const unsigned int timeoutInMsec)
 {
-    if (timeoutInMsec < 10 && timeoutInMsec > 10000)
+    if (timeoutInMsec < THREAD_JOIN_TIMEOUT_MIN && timeoutInMsec > THREAD_JOIN_TIMEOUT_MAX)
     {
         return -1;
     }
 
-    JoinPthreadData data(joinPthreadId);
+    ThreadJoiningData data(joinPthreadId);
     pthread_t supportThreadId;
     int createResult = pthread_create(&supportThreadId, NULL, pthread_join_routine, &data);
     if (createResult != 0)
@@ -51,7 +53,7 @@ int pthread_join_timeout(pthread_t joinPthreadId, unsigned int timeoutInMsec)
     bool result = false;
     timespec sleepTime;
     sleepTime.tv_sec = 0;
-    sleepTime.tv_nsec = 10000000;
+    sleepTime.tv_nsec = SLEEP_TIME_BETWEEN_CHECK;
     uint64_t startTimeInMsec = get_time_in_ms();
     do {
         if (data.IsJoinState())
@@ -76,4 +78,4 @@ int pthread_join_timeout(pthread_t joinPthreadId, unsigned int timeoutInMsec)
     return (result ? 0 : ETIMEDOUT);
 }
 
-}
+} // namespace ThreadNs

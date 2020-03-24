@@ -3,7 +3,7 @@
 
 #include <pthread.h>
 
-namespace RoutineNs
+namespace ThreadSafeNs
 {
 
 class SafeState
@@ -13,8 +13,8 @@ public:
     bool GetState();
     void SetState(const bool state);
 private:
-    pthread_mutex_t m_stateMutex;
     bool m_state;
+    pthread_mutex_t m_stateMutex;
 };
 
 }

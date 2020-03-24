@@ -4,7 +4,7 @@
 #include <deque>
 #include <pthread.h>
 
-namespace SafeContainersNs
+namespace ThreadSafeNs
 {
 
 template <typename T>

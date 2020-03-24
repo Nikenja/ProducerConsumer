@@ -3,7 +3,7 @@
 #include <sstream>
 #include <fstream>
 
-namespace TestPathNs
+namespace TestHelperNs
 {
 
 std::string get_path(const std::string& s)

@@ -1,10 +1,10 @@
 #include "waiting_time_getter.h"
 #include "log_msg.h"
 
-namespace WaitingTimeGetterNs
+namespace TimeHelperNs
 {
 
-unsigned int MAX_NSECS_DELAY = 1000000000;
+const unsigned int MAX_NSECS_DELAY = 1000000000;
 
 void add_time(const unsigned int secDelay, const unsigned int nsecDelay, timespec& waitingTime)
 {
@@ -37,4 +37,4 @@ bool try_get_monotonic_waiting_time(
     return true;
 }
 
-}
+} // namespace TimeHelperNs
